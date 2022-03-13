@@ -28,6 +28,9 @@ CREATE TABLE IF NOT EXISTS `ads` (
   `description` text COLLATE utf8_slovenian_ci NOT NULL,
   `user_id` int(11) NOT NULL,
   `image` longblob NOT NULL,
+  `postdate` datetime NOT NULL,
+  `enddate` datetime NOT NULL,
+  `category_id` int(11) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_slovenian_ci;
 
@@ -40,9 +43,30 @@ CREATE TABLE IF NOT EXISTS `ads` (
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE IF NOT EXISTS `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `email` text COLLATE utf8_slovenian_ci NOT NULL,
   `username` text COLLATE utf8_slovenian_ci NOT NULL,
+  `firstname` text COLLATE utf8_slovenian_ci NOT NULL,
+  `lastname` text COLLATE utf8_slovenian_ci NOT NULL,
   `password` text COLLATE utf8_slovenian_ci NOT NULL,
+  `address` text COLLATE utf8_slovenian_ci,
+  `postalcode` text COLLATE utf8_slovenian_ci,
+  `phone` int(11),
+  `sex` text COLLATE utf8_slovenian_ci,
+  `age` int(3),
   PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_slovenian_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktura tabele `categories`
+--
+
+DROP TABLE IF EXISTS `categories`;
+CREATE TABLE IF NOT EXISTS `categories` (
+	`id` int(11) NOT NULL AUTO_INCREMENT,
+	`name` text COLLATE utf8_slovenian_ci NOT NULL,
+	PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_slovenian_ci;
 COMMIT;
 

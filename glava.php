@@ -21,6 +21,7 @@
 			if( isset( $_SESSION["USER_ID"] ) ){
 				?>
 				<li><a href="objavi.php">Objavi oglas</a></li>
+				<li><a href="moji_oglasi.php">Moji Oglasi</a></li>
 				<li><a href="odjava.php">Odjava</a></li>
 				<?php
 			}else{

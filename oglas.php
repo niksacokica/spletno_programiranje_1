@@ -11,6 +11,17 @@ function get_ad( $id ){
 	return null;
 }
 
+function get_category( $category ){
+	global $conn;
+	$query = "SELECT * FROM categories WHERE id='$category';";
+	$res = $conn->query( $query );
+	
+	if( $name = $res->fetch_object() )
+		return $name->name;
+	
+	return "NULL";
+}
+
 if( !isset( $_GET["id"] ) ){
 	echo "Manjkajoči parametri.";
 	die();
@@ -30,9 +41,10 @@ $img_data = base64_encode( $oglas->image );
 		<p><?php echo $oglas->description;?></p>
 		<img src="data:image/jpg;base64, <?php echo $img_data;?>" width="400"/>
 		<p>Objavil: <?php echo $oglas->username;?></p>
+		<p>Kategorija: <?php echo get_category( $oglas->category_id );?></p>
+		<p>Datum objave: <?php echo $oglas->postdate;?></p>
 		<a href="index.php"><button>Nazaj</button></a>
 	</div>
 	<hr/>
-	<?php
-
-include_once( "noga.php" ); ?>
+	
+<?php include_once( "noga.php" ); ?>
