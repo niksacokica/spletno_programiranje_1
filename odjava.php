@@ -1,6 +1,6 @@
 <?php
-session_start(); //Naloži sejo
-session_unset(); //Odstrani sejne spremenljivke
-session_destroy(); //Uniči sejo
-header("Location: index.php"); //Preusmeri na index.php
+session_start();
+session_unset();
+session_destroy();
+header( "Location: index.php" );
 ?>
