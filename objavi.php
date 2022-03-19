@@ -1,32 +1,57 @@
 <?php include_once( "glava.php" );
 
-function publish( $title, $desc, $img, $cat ){
+function reArrayFiles( $file_post ){
+	$file_ary = array();
+    for( $i=0; $i<count( $file_post["name"] ); $i++ )
+        foreach( array_keys( $file_post ) as $key )
+            $file_ary[$i][$key] = $file_post[$key][$i];
+
+    return $file_ary;
+}
+
+function publish( $title, $desc, $imgs, $show, $cat ){
+	$allowed = array( "image/jpeg", "image/gif", "image/png" );
+	if( !in_array( $show["type"], $allowed ) )
+		return false;
+	
 	global $conn;
 	$title = mysqli_real_escape_string( $conn, $title );
 	$desc = mysqli_real_escape_string( $conn, $desc );
 	$user_id = $_SESSION["USER_ID"];
-
-	$img_file = mysqli_real_escape_string( $conn, file_get_contents( $img["tmp_name"] ) );
 	
-	$postdate = date( "Y-m-d H:i:s" );
+	$ts = new DateTime( "now", new DateTimeZone( "Europe/Ljubljana" ) );
+	$ts->setTimestamp( time() );
+	$postdate = $ts->format( 'Y-m-d H:i:s' );
 	
-	$query = "INSERT INTO ads (title, description, user_id, image, postdate, enddate, category_id)
-				VALUES('$title', '$desc', '$user_id', '$img_file', '$postdate', 
-				DATE_ADD('$postdate', INTERVAL 30 DAY), $cat);";
+	$pot = "./slike/" . $user_id . "/" . $ts->format( 'Y-m-d_H-i-s' ) . "/";
+	mkdir( $pot, 0777, true );
+	
+	$show_pic = $show["name"];
+	$images = reArrayFiles( $imgs );
+	move_uploaded_file( $show["tmp_name"], $pot . $show_pic );
+	foreach( $images as $img ){
+		if( $img["name"] != $show_pic ){
+			if( !in_array( $img["type"], $allowed ) ){
+				$files = glob( $pot . "*" );
+				foreach( $files as $file ){
+					unlink( $file );
+				}
+				rmdir( $pot );
+				return false;
+			}
+			move_uploaded_file( $img["tmp_name"], $pot . $img["name"] );
+		}
+	}
+	
+	$query = "INSERT INTO ads (title, description, user_id, images, show_image, postdate, enddate,
+				category_id, views) VALUES('$title', '$desc', '$user_id', '$pot', '$show_pic',
+				'$postdate', DATE_ADD('$postdate', INTERVAL 30 DAY), '$cat', 0);";
 				
 	if( $conn->query( $query ) )
 		return true;
 	
 	echo mysqli_error( $conn );
 	return false;
-	
-	/*
-		$imeSlike=$photo["name"]; //Pazimo, da je enolično!
-		//sliko premaknemo iz začasne poti, v neko našo mapo, zaradi preglednosti
-		move_uploaded_file($photo["tmp_name"], "slika/".$imeSlike);
-		$pot="slika/".$imeSlike;		
-		//V bazo shranimo $pot
-	*/
 }
 
 function get_categories(){
@@ -45,22 +70,22 @@ $categories = get_categories();
 $error = "";
 if( isset( $_POST["poslji"] ) ){
 	if( empty( $_POST["title"] ) || empty( $_POST["description"] ) ||
-		( !is_uploaded_file( $_FILES["image"]["tmp_name"]  ) || !getimagesize( $_FILES["image"]["tmp_name"] ) ) )
+		$_FILES["show"]["error"] != 0 || $_FILES["images"]["error"][0] != 0 )
 		$error = "napačen vnos.";
-	else if( publish( $_POST["title"], $_POST["description"], $_FILES["image"], $_POST["category"] ) ){
+	else if( publish( $_POST["title"], $_POST["description"], $_FILES["images"], $_FILES["show"], $_POST["category"] ) ){
 		header( "Location: index.php" );
 		die();
-	}
-	else
+	}else
 		$error = "Prišlo je do napake pri objavi oglasa.";
 }
 ?>
 
 	<h2>Objavi oglas</h2>
 	<form action="objavi.php" method="POST" enctype="multipart/form-data">
-		<label>Naslov</label><input type="text" name="title" /> <br/>
+		<label>Naslov</label><input type="text" name="title" > <br/>
 		<label>Opis</label><br/><textarea name="description" rows="10" cols="50"></textarea> <br/>
-		<label>Slika</label><input type="file" name="image" /> <br/>
+		<label>Predstavitvena slika</label><input type="file" name="show" > <br/>
+		<label>Slike</label><input type="file" name="images[]" multiple > <br/>
 		<label>Kategorija</label> <select name="category">
 			<?php foreach( $categories as $category ){ ?>
 				<option value=<?php echo $category->id;?>><?php echo $category->name;?></option>

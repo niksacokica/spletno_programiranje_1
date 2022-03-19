@@ -23,6 +23,15 @@ function get_categories(){
 	return $categories;
 }
 
+function reArrayFiles( $file_post ){
+	$file_ary = array();
+    for( $i=0; $i<count( $file_post["name"] ); $i++ )
+        foreach( array_keys( $file_post ) as $key )
+            $file_ary[$i][$key] = $file_post[$key][$i];
+
+    return $file_ary;
+}
+
 if( !isset( $_GET["id"] ) ){
 	echo "Manjkajoči parametri.";
 	die();
@@ -36,22 +45,89 @@ if( $oglas == null ){
 
 $error = "";
 if( isset( $_POST["uredi"] ) ){
+	print_r( $_FILES );
+	
 	if( empty( $_POST["title"] ) || empty( $_POST["description"] ) )
 		$error = "napačen vnos.";
-	else if( !is_uploaded_file( $_FILES["image"]["tmp_name"]  ) ){
+	else if( $_FILES["show"]["error"] == 0 && $_FILES["images"]["error"][0] == 0 ){
 		$title = mysqli_real_escape_string( $conn, $_POST["title"] );
 		$description = mysqli_real_escape_string( $conn, $_POST["description"] );
-		$query = "UPDATE ads SET title='$title', description='$description' WHERE id='$id';";
+		$cat = $_POST["category"];
+		
+		$pics = glob( $oglas->images . "*" );
+		foreach( $pics as $pic ){
+			unlink( $pic );
+		}
+		
+		$show_pic = $_FILES["show"];
+		$allowed = array( "image/jpeg", "image/gif", "image/png" );
+		if( in_array( $show_pic["type"], $allowed ) ){
+			$images = reArrayFiles( $_FILES["images"] );
+			$show = $show_pic["name"];
+			
+			move_uploaded_file( $show_pic["tmp_name"], $oglas->images . $show );
+			foreach( $images as $img ){
+				if( $img["name"] != $show ){
+					if( in_array( $img["type"], $allowed ) )
+						move_uploaded_file( $img["tmp_name"], $oglas->images . $img["name"] );
+				}
+			}
+			
+			$query = "UPDATE ads SET title='$title', description='$description', show_image='$show',
+					category_id = '$cat' WHERE id='$id';";
+		
+			if( !$conn->query( $query ) )
+				$error = mysqli_error( $conn );
+		}else
+			$error = "Napaka! Datoteka ni slika!";
+	}else if( $_FILES["images"]["error"][0] == 0 ){
+		$title = mysqli_real_escape_string( $conn, $_POST["title"] );
+		$description = mysqli_real_escape_string( $conn, $_POST["description"] );
+		$cat = $_POST["category"];
+		$query = "UPDATE ads SET title='$title', description='$description', category_id = '$cat'
+				WHERE id='$id';";
 	
 		if( !$conn->query( $query ) )
 			$error = mysqli_error( $conn );
-	}else if( getimagesize( $_FILES["image"]["tmp_name"] ) ){
+		
+		$pics = glob( $oglas->images . "*" );
+		foreach( $pics as $pic ){
+			if( $pic != $oglas->images . $oglas->show_image )
+				unlink( $pic );
+		}
+		
+		$allowed = array( "image/jpeg", "image/gif", "image/png" );
+		$images = reArrayFiles( $_FILES["images"] );
+		foreach( $images as $img ){
+			if( in_array( $img["type"], $allowed ) )
+				move_uploaded_file( $img["tmp_name"], $oglas->images . $img["name"] );
+		}
+	}else if( $_FILES["show"]["error"] == 0 ){
+		$show_pic = $_FILES["show"];
+		$allowed = array( "image/jpeg", "image/gif", "image/png" );
+		if( in_array( $show_pic["type"], $allowed ) ){
+			$title = mysqli_real_escape_string( $conn, $_POST["title"] );
+			$description = mysqli_real_escape_string( $conn, $_POST["description"] );
+			$cat = $_POST["category"];
+			
+			$show = $show_pic["name"];
+			unlink( $oglas->images . $oglas->show_image );
+			move_uploaded_file( $show_pic["tmp_name"], $oglas->images . $show );
+			
+			$query = "UPDATE ads SET title='$title', description='$description', show_image='$show',
+					category_id='$cat' WHERE id='$id';";
+				
+			if( !$conn->query( $query ) )
+				$error = mysqli_error( $conn );
+		}else
+			$error = "Napaka! Datoteka ni slika!";
+	}else if( $_FILES["show"]["error"] != 0 && $_FILES["images"]["error"][0] != 0 ){
 		$title = mysqli_real_escape_string( $conn, $_POST["title"] );
 		$description = mysqli_real_escape_string( $conn, $_POST["description"] );
-		$img_file = mysqli_real_escape_string( $conn, file_get_contents( $_FILES["image"]["tmp_name"] ) );
-		$query = "UPDATE ads SET title='$title', description='$description',
-			image='$img_file' WHERE id='$id';";
+		$cat = $_POST["category"];
 			
+		$query = "UPDATE ads SET title='$title', description='$description', category_id = '$cat' WHERE id='$id';";
+		
 		if( !$conn->query( $query ) )
 			$error = mysqli_error( $conn );
 	}else
@@ -64,7 +140,7 @@ if( isset( $_POST["uredi"] ) ){
 	if( $conn->query( $query ) ){
 		$tmp = new DateTime( "now", new DateTimeZone( "Europe/Ljubljana" ) );
 		$tmp->setTimestamp( time() );
-		$error = $tmp->format( 'd-m-Y, H:i:s' );
+		$error = $tmp->format( 'Y-m-d H:i:s' );
 	}else
 		$error = mysqli_error( $conn );
 }else if( isset( $_POST["izbrisi"] ) ){
@@ -76,15 +152,21 @@ if( isset( $_POST["uredi"] ) ){
 }
 
 $categories = get_categories();
-$img_data = base64_encode( $oglas->image );
 ?>
 
 	<form action="uredi_oglas.php?id=<?php echo $oglas->id;?>" method="POST" enctype="multipart/form-data">
 		<label>Naslov</label><input type="text" name="title" value="<?php echo $oglas->title;?>" /> <br/>
 		<label>Opis</label><br/><textarea name="description" rows="10" cols="50"><?php echo $oglas->description;?></textarea> </br> <br/>
 		
-		<img src="data:image/jpg;base64, <?php echo $img_data;?>" width="200"/>
-		<input type="file" name="image" /> </br> </br>
+		<img src="<?php echo $oglas->images . $oglas->show_image;?>" width="200"/>
+		<input type="file" name="show" > </br> </br>
+		
+		<?php $pics = glob( $oglas->images . "*" );
+		foreach( $pics as $pic ){
+			if( $pic != $oglas->images . $oglas->show_image )
+				echo '<img src="' . $pic . '" width="200"/>';
+		} ?>
+		<input type="file" name="images[]" multiple > </br> </br>
 		
 		<label>Kategorija</label> <select name="category">
 			<?php foreach( $categories as $category ){ ?>
@@ -104,7 +186,10 @@ $img_data = base64_encode( $oglas->image );
 		} ?>
 		</p>
 		<input type="submit" name="uredi" value="Uredi" />		
-		<?php if( date( "Y-m-d H:i:s" ) > $oglas->enddate ){ ?>
+		<?php
+			$ts = new DateTime( "now", new DateTimeZone( "Europe/Ljubljana" ) );
+			$ts->setTimestamp( time() );
+			if( $ts->format( 'Y-m-d H:i:s' ) > $oglas->enddate ){ ?>
 			<input type="submit" name="podaljsaj" value="Podaljšaj" />
 		<?php } ?>
 		<input type="submit" name="izbrisi" value="Izbriši" />

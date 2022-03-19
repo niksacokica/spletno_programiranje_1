@@ -74,7 +74,7 @@ if( isset( $_POST["poslji"] ) ){
 		<br/> <label>Neobvezni podatki:</label> <br/>
 		<label>Naslov</label><input type="text" name="address" /> <br/>
 		<label>Pošta</label><input type="number" min="0" max="1000000" value="0" name="postalcode" /> <br/>
-		<label>Telefonska številka</label><input type="tel" name="phone" /> <br/>
+		<label>Telefonska številka</label><input type="tel" name="phone" value="0" /> <br/>
 		<label>Spol</label><input type="text" name="sex" /> <br/>
 		<label>Starost</label><input type="number" min="0" max="100" value="0" name="age" /> <br/>
 		<br/> <input type="submit" name="poslji" value="Pošlji" /> <br/>

@@ -18,6 +18,36 @@ function get_oglasi(){
 	return $oglasi;
 }
 
+function get_some_oglasi( $iskanje ){
+	global $conn;
+	$query = "SELECT * FROM ads WHERE title LIKE '$iskanje%' OR description LIKE '$iskanje%';";
+	$res = $conn->query( $query );
+	
+	$oglasi = array();
+	while( $oglas = $res->fetch_object() )
+		array_push( $oglasi, $oglas );
+	
+	usort( $oglasi, "cmp" );
+	
+	return $oglasi;
+}
+
+$kategorije_filter = array();
+function get_categories(){
+	global $conn;
+	global $kategorije_filter;
+	$query = "SELECT * FROM categories;";
+	$res = $conn->query( $query );
+	
+	$categories = array();
+	while( $category = $res->fetch_object() ){
+		array_push( $categories, $category );
+		array_push( $kategorije_filter, $category->id );
+	}
+	
+	return $categories;
+}
+
 function get_category( $category ){
 	global $conn;
 	$query = "SELECT * FROM categories WHERE id='$category';";
@@ -29,17 +59,64 @@ function get_category( $category ){
 	return "NULL";
 }
 
-$oglasi = get_oglasi();?>
+$oglasi = get_oglasi();
+$kategorije = get_categories();
 
-<input href="index.php?id=10" type="checkbox" name="show_expired" value="true">
-<label>Prikaži zapadle oglase</label><br>
+$prikazi_zapadle = False;
+if( isset( $_POST["filtriraj"] ) ){
+	if( isset( $_POST["prikazi_zapadle"] ) ){
+		$prikazi_zapadle = $_POST["prikazi_zapadle"];
+	}
+	
+	$kategorije_filter = array();
+	foreach( $_POST as $key => $val ){
+		if( is_int( $key ) ){
+			array_push( $kategorije_filter, $key );
+		}
+	}
+}else if( isset( $_POST["isci"] ) ){
+	if( isset( $_POST["prikazi_zapadle"] ) ){
+		$prikazi_zapadle = $_POST["prikazi_zapadle"];
+	}
+	
+	$kategorije_filter = array();
+	foreach( $_POST as $key => $val ){
+		if( is_int( $key ) ){
+			array_push( $kategorije_filter, $key );
+		}
+	}
+	
+	if( !empty( $_POST["iskanje"] ) ){
+		$oglasi = get_some_oglasi( $_POST["iskanje"] );
+	}
+}?>
+<form action="index.php" method="POST" enctype="multipart/form-data">
+	<input type="search" name="iskanje">
+	<input type="submit" name="isci" value="isci" /> <hr/>
+	
+	<?php foreach( $kategorije as $kategorija ){ ?>
+		<input type="checkbox" name="<?php echo $kategorija->id; ?>" value="true"
+		<?php if( in_array( $kategorija->id, $kategorije_filter ) ) { echo "checked"; } ?> >
+		<label><?php echo $kategorija->name; ?></label>
+	<?php } ?>
+	
+	</br> </br>
+	<input type="checkbox" name="prikazi_zapadle" value="true"
+	<?php if( $prikazi_zapadle ){ echo "checked"; } ?> >
+	<label>Prikaži zapadle oglase</label> </br> </br>
+	<input type="submit" name="filtriraj" value="Filtriraj" />
+	<br> <hr/>
+</form>
 	
 <?php foreach( $oglasi as $oglas ){	
-	if( date( "Y-m-d H:i:s" ) < $oglas->enddate ){?>
+	$ts = new DateTime( "now", new DateTimeZone( "Europe/Ljubljana" ) );
+	$ts->setTimestamp( time() );
+	if( ( ( $ts->format( 'Y-m-d H:i:s' ) < $oglas->enddate ) || ( $ts->format( 'Y-m-d H:i:s' ) > $oglas->enddate && $prikazi_zapadle ) ) && in_array( $oglas->category_id, $kategorije_filter ) ){?>
 		<div class="oglas">
 			<h4><?php echo $oglas->title;?></h4>
-			<p>Kategorija: <?php echo get_category( $oglas->category_id );?></p>
-			<p>Opis: </br><?php echo $oglas->description;?></p>
+			<label>Kategorija: <?php echo get_category( $oglas->category_id ); ?> </label> </br> </br>
+			<img src="<?php echo $oglas->images . $oglas->show_image;?>" width="400"/>
+			</br> </br> <label>Pogledov: <?php echo $oglas->views;?> </label> </br> </br>
 			<a href="oglas.php?id=<?php echo $oglas->id;?>"><button>Preberi več</button></a>
 		</div>
 		<hr/>

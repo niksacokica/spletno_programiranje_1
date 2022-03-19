@@ -35,7 +35,7 @@ foreach( $oglasi as $oglas ){ ?>
 	<div class="oglas">
 		<h4><?php echo $oglas->title;?></h4>
 		<p><?php echo $oglas->description;?></p>
-		<img src="data:image/jpg;base64, <?php echo base64_encode( $oglas->image );?>" width="400"/>
+		<img src="<?php echo $oglas->images . $oglas->show_image;?>" width="400"/>
 		<p>Kategorija: <?php echo get_category( $oglas->category_id );?></p>
 		<p>Datum objave: <?php echo $oglas->postdate;?></p>
 		<p>Datum zapadlosti: <?php echo $oglas->enddate;?></p>
