@@ -9,14 +9,14 @@ function reArrayFiles( $file_post ){
     return $file_ary;
 }
 
-function publish( $title, $desc, $imgs, $show, $cat ){
+function publish( $post, $imgs, $show, $cats ){
 	$allowed = array( "image/jpeg", "image/gif", "image/png" );
 	if( !in_array( $show["type"], $allowed ) )
 		return false;
 	
 	global $conn;
-	$title = mysqli_real_escape_string( $conn, $title );
-	$desc = mysqli_real_escape_string( $conn, $desc );
+	$title = mysqli_real_escape_string( $conn, $post["title"] );
+	$desc = mysqli_real_escape_string( $conn, $post["description"] );
 	$user_id = $_SESSION["USER_ID"];
 	
 	$ts = new DateTime( "now", new DateTimeZone( "Europe/Ljubljana" ) );
@@ -44,8 +44,8 @@ function publish( $title, $desc, $imgs, $show, $cat ){
 	}
 	
 	$query = "INSERT INTO ads (title, description, user_id, images, show_image, postdate, enddate,
-				category_id, views) VALUES('$title', '$desc', '$user_id', '$pot', '$show_pic',
-				'$postdate', DATE_ADD('$postdate', INTERVAL 30 DAY), '$cat', 0);";
+				categories_ids, views) VALUES('$title', '$desc', '$user_id', '$pot', '$show_pic',
+				'$postdate', DATE_ADD('$postdate', INTERVAL 30 DAY), '$cats', 0);";
 				
 	if( $conn->query( $query ) )
 		return true;
@@ -69,17 +69,24 @@ function get_categories(){
 $categories = get_categories();
 $error = "";
 if( isset( $_POST["poslji"] ) ){
-	if( empty( $_POST["title"] ) || empty( $_POST["description"] ) ||
+	$cats = "";
+	foreach( $_POST as $key => $val ){
+	  if( is_int( $key ) ){
+		$cats = $cats . $key . " ";
+	  }
+	}
+	
+	if( empty( $_POST["title"] ) || empty( $_POST["description"] ) || empty( $cats ) ||
 		$_FILES["show"]["error"] != 0 || $_FILES["images"]["error"][0] != 0 )
 		$error = "napačen vnos.";
-	else if( publish( $_POST["title"], $_POST["description"], $_FILES["images"], $_FILES["show"], $_POST["category"] ) ){
+	else if( publish( $_POST, $_FILES["images"], $_FILES["show"], substr( $cats, 0, -1) ) ){
 		header( "Location: index.php" );
 		die();
 	}else
 		$error = "Prišlo je do napake pri objavi oglasa.";
 }
 
-function get_category( $category ){
+function getCategory( $category ){
 	global $conn;
 	$query = "SELECT * FROM categories WHERE id='$category';";
 	$res = $conn->query( $query );
@@ -110,15 +117,13 @@ function get_subCategories( $category ){
 }
 
 $subCats = array();
-array_push( $subCats, 1 );
 function get_SubCats( $cat ){
+	global $subCats;
 	foreach( get_subCategories( $cat ) as $category ){
 		array_push( $subCats, getCategory( $category ) );
 		get_SubCats( $category );
 	}
-	print_r( $subCats );
 }
-
 ?>
 	<div style="padding: 1%;">
 		<h2>Objavi oglas</h2>
@@ -127,19 +132,19 @@ function get_SubCats( $cat ){
 			<label>Opis</label><br/><textarea name="description" rows="10" cols="50"></textarea> <br/>
 			<label>Predstavitvena slika </label><input type="file" name="show" > <br/>
 			<label>Slike </label><input type="file" name="images[]" multiple > <br/>
-			<label>Kategorija</label> <select name="category">
-				<?php foreach( $categories as $category ){
-					if( $category->deep == 1 ){
-						print_r( $subCats );
-						get_SubCats( $category->id );
-						print_r( $subCats ); ?>
-						<option value=<?php echo $category->id;?>><?php echo "&nbsp" . $category->name;?></option>
-						<?php foreach( $subCats as $cat ){ ?>
-							<option value=<?php echo $cat->id;?>><?php echo "&nbsp" . $cat->name;?></option>
-						<?php 
-				} } } ?>
-			</select>
-			<input type="submit" name="poslji" value="Objavi" /> <br/>
+			<label>Kategorije</label> </br>
+			<?php foreach( $categories as $category ){
+				if( $category->deep == 1 ){ ?>
+					<input type="checkbox" name="<?php echo $category->id; ?>" value="true" >
+					<label><?php echo $category->name; ?></label> <br/>
+					
+					<?php get_SubCats( $category->id );
+					foreach( $subCats as $cat ){ ?>
+						<label><?php echo str_repeat( "&nbsp", $cat->deep * $cat->deep ); ?></label>
+						<input type="checkbox" name="<?php echo $cat->id; ?>" value="true" >
+						<label><?php echo $cat->name; ?></label> <br/>
+			<?php } } } ?>
+			<br/> <input type="submit" name="poslji" value="Objavi" /> <br/>
 			<label><?php echo $error;?></label>
 		</form>
 	</div>

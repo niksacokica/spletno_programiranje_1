@@ -27,11 +27,11 @@ CREATE TABLE IF NOT EXISTS `ads` (
   `title` text COLLATE utf8_slovenian_ci NOT NULL,
   `description` text COLLATE utf8_slovenian_ci NOT NULL,
   `user_id` int(11) NOT NULL,
-  `images` text NOT NULL,
-  `show_image` text NOT NULL,
+  `images` text COLLATE utf8_slovenian_ci NOT NULL,
+  `show_image` text COLLATE utf8_slovenian_ci NOT NULL,
   `postdate` datetime NOT NULL,
   `enddate` datetime NOT NULL,
-  `category_id` int(11) NOT NULL,
+  `categories_ids` text COLLATE utf8_slovenian_ci NOT NULL,
   `views` int(11) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_slovenian_ci;
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS `categories` (
 	`id` int(11) NOT NULL AUTO_INCREMENT,
 	`name` text COLLATE utf8_slovenian_ci NOT NULL,
 	`deep` int(1),
-	`sub_categories`  text COLLATE utf8_slovenian_ci,
+	`sub_categories` text COLLATE utf8_slovenian_ci,
 	PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_slovenian_ci;
 COMMIT;

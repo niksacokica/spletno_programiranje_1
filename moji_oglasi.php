@@ -30,14 +30,30 @@ function get_category( $category ){
 	return "NULL";
 }
 
+function arrayFromString( $string ){
+	$sub_cats = array();
+	if( !empty( $string ) ){
+		$ids = explode( ' ', $string );
+		foreach( $ids as $id )
+			array_push( $sub_cats, $id );
+	}
+	
+	return $sub_cats;
+}
+
 $oglasi = get_oglasi();
 foreach( $oglasi as $oglas ){ ?>
 	<div class="oglas">
 		<h4><?php echo $oglas->title;?></h4>
 		<p><?php echo $oglas->description;?></p>
 		<img src="<?php echo $oglas->images . $oglas->show_image;?>" width="400"/>
-		<p>Kategorija: <?php echo get_category( $oglas->category_id );?></p>
-		<p>Datum objave: <?php echo $oglas->postdate;?></p>
+		<p>Kategorije: </p>
+		<?php
+			$cats = arrayFromString( $oglas->categories_ids );
+			foreach( $cats as $cat ){ ?>
+				<p><?php echo get_category( $cat ); ?></p>
+		<?php } ?>
+		</br> <p>Datum objave: <?php echo $oglas->postdate;?></p>
 		<p>Datum zapadlosti: <?php echo $oglas->enddate;?></p>
 		<a href="uredi_oglas.php?id=<?php echo $oglas->id;?>"><button>Uredi</button></a>
 	</div>

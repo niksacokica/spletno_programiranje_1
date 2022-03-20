@@ -45,14 +45,19 @@ if( $oglas == null ){
 
 $error = "";
 if( isset( $_POST["uredi"] ) ){
-	print_r( $_FILES );
+	$cats = "";
+	foreach( $_POST as $key => $val ){
+	  if( is_int( $key ) ){
+		$cats = $cats . $key . " ";
+	  }
+	}
+	$cats = substr( $cats, 0, -1);
 	
-	if( empty( $_POST["title"] ) || empty( $_POST["description"] ) )
+	if( empty( $_POST["title"] ) || empty( $_POST["description"] ) || empty( $cats ) )
 		$error = "napačen vnos.";
 	else if( $_FILES["show"]["error"] == 0 && $_FILES["images"]["error"][0] == 0 ){
 		$title = mysqli_real_escape_string( $conn, $_POST["title"] );
 		$description = mysqli_real_escape_string( $conn, $_POST["description"] );
-		$cat = $_POST["category"];
 		
 		$pics = glob( $oglas->images . "*" );
 		foreach( $pics as $pic ){
@@ -74,18 +79,19 @@ if( isset( $_POST["uredi"] ) ){
 			}
 			
 			$query = "UPDATE ads SET title='$title', description='$description', show_image='$show',
-					category_id = '$cat' WHERE id='$id';";
+					categories_ids = '$cats' WHERE id='$id';";
 		
 			if( !$conn->query( $query ) )
 				$error = mysqli_error( $conn );
+			else
+				header( "Refresh:0" );
 		}else
 			$error = "Napaka! Datoteka ni slika!";
 	}else if( $_FILES["images"]["error"][0] == 0 ){
 		$title = mysqli_real_escape_string( $conn, $_POST["title"] );
 		$description = mysqli_real_escape_string( $conn, $_POST["description"] );
-		$cat = $_POST["category"];
-		$query = "UPDATE ads SET title='$title', description='$description', category_id = '$cat'
-				WHERE id='$id';";
+		$query = "UPDATE ads SET title='$title', description='$description',
+			categories_ids = '$cats' WHERE id='$id';";
 	
 		if( !$conn->query( $query ) )
 			$error = mysqli_error( $conn );
@@ -102,38 +108,42 @@ if( isset( $_POST["uredi"] ) ){
 			if( in_array( $img["type"], $allowed ) )
 				move_uploaded_file( $img["tmp_name"], $oglas->images . $img["name"] );
 		}
+		
+		header( "Refresh:0" );
 	}else if( $_FILES["show"]["error"] == 0 ){
 		$show_pic = $_FILES["show"];
 		$allowed = array( "image/jpeg", "image/gif", "image/png" );
 		if( in_array( $show_pic["type"], $allowed ) ){
 			$title = mysqli_real_escape_string( $conn, $_POST["title"] );
 			$description = mysqli_real_escape_string( $conn, $_POST["description"] );
-			$cat = $_POST["category"];
 			
 			$show = $show_pic["name"];
 			unlink( $oglas->images . $oglas->show_image );
 			move_uploaded_file( $show_pic["tmp_name"], $oglas->images . $show );
 			
-			$query = "UPDATE ads SET title='$title', description='$description', show_image='$show',
-					category_id='$cat' WHERE id='$id';";
+			$query = "UPDATE ads SET title='$title', description='$description',
+				show_image='$show', categories_ids='$cats' WHERE id='$id';";
 				
 			if( !$conn->query( $query ) )
 				$error = mysqli_error( $conn );
+			else
+				header( "Refresh:0" );
 		}else
 			$error = "Napaka! Datoteka ni slika!";
 	}else if( $_FILES["show"]["error"] != 0 && $_FILES["images"]["error"][0] != 0 ){
 		$title = mysqli_real_escape_string( $conn, $_POST["title"] );
 		$description = mysqli_real_escape_string( $conn, $_POST["description"] );
-		$cat = $_POST["category"];
 			
-		$query = "UPDATE ads SET title='$title', description='$description', category_id = '$cat' WHERE id='$id';";
+		$query = "UPDATE ads SET title='$title', description='$description',
+			categories_ids = '$cats' WHERE id='$id';";
 		
 		if( !$conn->query( $query ) )
 			$error = mysqli_error( $conn );
-	}else
-		echo $error;
+		else
+			header( "Refresh:0" );
+	}
 	
-	header( "Refresh:0" );
+	echo $error;
 }else if( isset( $_POST["podaljsaj"] ) ){
 	$id = mysqli_real_escape_string( $conn, $id );
 	$query = "UPDATE ads SET enddate=DATE_ADD(NOW(), INTERVAL 30 DAY) WHERE id='$id';";
@@ -144,6 +154,12 @@ if( isset( $_POST["uredi"] ) ){
 	}else
 		$error = mysqli_error( $conn );
 }else if( isset( $_POST["izbrisi"] ) ){
+	$files = glob( $oglas->images . "*" );
+	foreach( $files as $file ){
+		unlink( $file );
+	}
+	rmdir( $oglas->images );
+	
 	$id = mysqli_real_escape_string( $conn, $id );
 	$query = "DELETE FROM ads WHERE id='$id';";
 	$conn->query( $query );
@@ -151,7 +167,56 @@ if( isset( $_POST["uredi"] ) ){
 	die();
 }
 
+function getCategory( $category ){
+	global $conn;
+	$query = "SELECT * FROM categories WHERE id='$category';";
+	$res = $conn->query( $query );
+	
+	if( $cat = $res->fetch_object() )
+		return $cat;
+	
+	return null;
+}
+
+function get_subCategories( $category ){
+	global $conn;
+	$query = "SELECT * FROM categories WHERE id='$category';";
+	$res = $conn->query( $query );
+	
+	$sub_cats = array();
+	$subs = "";
+	if( $name = $res->fetch_object() )
+		$subs = $name->sub_categories;
+	
+	if( !empty( $subs ) ){
+		$ids = explode( ' ', $subs );
+		foreach( $ids as $id )
+			array_push( $sub_cats, $id );
+	}
+	
+	return $sub_cats;
+}
+
 $categories = get_categories();
+$subCats = array();
+function get_SubCats( $cat ){
+	global $subCats;
+	foreach( get_subCategories( $cat ) as $category ){
+		array_push( $subCats, getCategory( $category ) );
+		get_SubCats( $category );
+	}
+}
+
+function arrayFromString( $string ){
+	$sub_cats = array();
+	if( !empty( $string ) ){
+		$ids = explode( ' ', $string );
+		foreach( $ids as $id )
+			array_push( $sub_cats, $id );
+	}
+	
+	return $sub_cats;
+}
 ?>
 
 	<form action="uredi_oglas.php?id=<?php echo $oglas->id;?>" method="POST" enctype="multipart/form-data" style="padding: 1%;">
@@ -168,14 +233,22 @@ $categories = get_categories();
 		} ?>
 		<input type="file" name="images[]" multiple > </br> </br>
 		
-		<label>Kategorija</label> <select name="category">
-			<?php foreach( $categories as $category ){
-				if( $category->isMainCategory ){ ?>
-					<option value=<?php echo $category->id;?>
-					<?php if( $category->id == $oglas->category_id ) echo 'selected="selected"';?>>
-					<?php echo $category->name;?></option>
-			<?php } } ?>
-		</select>
+		<label>Kategorije</label> </br>
+		<?php foreach( $categories as $category ){
+			if( $category->deep == 1 ){
+				$kategorije = arrayFromString( $oglas->categories_ids ); ?>
+				<input type="checkbox" name="<?php echo $category->id; ?>" value="true"
+				<?php if( in_array( $category->id, $kategorije ) ) { echo "checked"; } ?> >
+				<label><?php echo $category->name; ?></label> <br/>
+					
+				<?php get_SubCats( $category->id );
+				
+				foreach( $subCats as $cat ){ ?>
+					<label><?php echo str_repeat( "&nbsp", $cat->deep * $cat->deep ); ?></label>
+					<input type="checkbox" name="<?php echo $cat->id; ?>" value="true"
+					<?php if( in_array( $cat->id, $kategorije ) ) { echo "checked"; } ?> >
+					<label><?php echo $cat->name; ?></label> <br/>
+		<?php } } } ?>
 		
 		
 		<p>Datum objave: <?php echo $oglas->postdate;?></p>
