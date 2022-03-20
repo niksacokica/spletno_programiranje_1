@@ -61,24 +61,32 @@ if( isset( $_POST["poslji"] ) ){
 }
 
 ?>
-
-	<h2>Registracija</h2>
-	<form action="registracija.php" method="POST">
-		<label>Obvezni podatki:</label> <br/>
-		<label>Elektronski naslov</label><input type="email" name="email" /> <br/>
-		<label>Uporabniško ime</label><input type="text" name="username" /> <br/>
-		<label>Ime</label><input type="text" name="firstname" /> <br/>
-		<label>Priimek</label><input type="text" name="lastname" /> <br/>
-		<label>Geslo</label><input type="password" name="password" /> <br/>
-		<label>Ponovi geslo</label><input type="password" name="repeat_password" /> <br/>
-		<br/> <label>Neobvezni podatki:</label> <br/>
-		<label>Naslov</label><input type="text" name="address" /> <br/>
-		<label>Pošta</label><input type="number" min="0" max="1000000" value="0" name="postalcode" /> <br/>
-		<label>Telefonska številka</label><input type="tel" name="phone" value="0" /> <br/>
-		<label>Spol</label><input type="text" name="sex" /> <br/>
-		<label>Starost</label><input type="number" min="0" max="100" value="0" name="age" /> <br/>
-		<br/> <input type="submit" name="poslji" value="Pošlji" /> <br/>
-		<label><?php echo $error;?></label>
-	</form>
+	<div class="register">
+		<h2>Registracija</h2>
+		<form action="registracija.php" method="POST">
+			<table class="register_table">
+				<tr>
+					<th>
+						<label>Obvezni podatki:</label> <br/> <br/>
+						<label>Elektronski naslov: </label><input type="email" name="email" /> <br/> <br/>
+						<label>Uporabniško ime: </label><input type="text" name="username" /> <br/> <br/>
+						<label>Ime: </label><input type="text" name="firstname" /> <br/> <br/>
+						<label>Priimek: </label><input type="text" name="lastname" /> <br/> <br/>
+						<label>Geslo: </label><input type="password" name="password" /> <br/> <br/>
+						<label>Ponovi geslo: </label><input type="password" name="repeat_password" />
+					</th> <th>
+						<br/> <label>Neobvezni podatki:</label> <br/> <br/>
+						<label>Naslov: </label><input type="text" name="address" /> <br/> <br/>
+						<label>Pošta: </label><input type="number" min="0" max="1000000" value="0" name="postalcode" /> <br/> <br/>
+						<label>Telefonska številka: </label><input type="tel" name="phone" value="0" /> <br/> <br/>
+						<label>Spol: </label><input type="text" name="sex" /> <br/> <br/>
+						<label>Starost: </label><input type="number" min="0" max="100" value="0" name="age" />
+					</th>
+				</tr>
+			</table>
+			<br/> <input type="submit" name="poslji" value="Pošlji" /> <br/> <br/>
+			<label><?php echo $error;?></label>
+		</form>
+	</div>
 	
 <?php include_once( "noga.php" ); ?>

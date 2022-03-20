@@ -22,13 +22,15 @@ if( isset( $_POST["poslji"] ) ){
 		$error = "Prijava ni uspela.";
 }
 ?>
-
-	<h2>Prijava</h2>
-	<form action="prijava.php" method="POST">
-		<label>Uporabniško ime</label><input type="text" name="username" /> <br/>
-		<label>Geslo</label><input type="password" name="password" /> <br/>
-		<input type="submit" name="poslji" value="Pošlji" /> <br/>
-		<label><?php echo $error;?></label>
-	</form>
+	
+	<div class="prijava">
+		<h2>Prijava</h2>
+		<form action="prijava.php" method="POST">
+			<label>Uporabniško ime: </label><input type="text" name="username" /> <br/> <br/>
+			<label>Geslo: </label><input type="password" name="password" /> <br/> <br/>
+			<input type="submit" name="poslji" value="Pošlji" /> <br/> <br/>
+			<label><?php echo $error;?></label>
+		</form>
+	</div>
 	
 <?php include_once( "noga.php" ); ?>

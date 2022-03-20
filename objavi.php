@@ -78,21 +78,69 @@ if( isset( $_POST["poslji"] ) ){
 	}else
 		$error = "Prišlo je do napake pri objavi oglasa.";
 }
-?>
 
-	<h2>Objavi oglas</h2>
-	<form action="objavi.php" method="POST" enctype="multipart/form-data">
-		<label>Naslov</label><input type="text" name="title" > <br/>
-		<label>Opis</label><br/><textarea name="description" rows="10" cols="50"></textarea> <br/>
-		<label>Predstavitvena slika</label><input type="file" name="show" > <br/>
-		<label>Slike</label><input type="file" name="images[]" multiple > <br/>
-		<label>Kategorija</label> <select name="category">
-			<?php foreach( $categories as $category ){ ?>
-				<option value=<?php echo $category->id;?>><?php echo $category->name;?></option>
-			<?php } ?>
-		</select>
-		<input type="submit" name="poslji" value="Objavi" /> <br/>
-		<label><?php echo $error;?></label>
-	</form>
+function get_category( $category ){
+	global $conn;
+	$query = "SELECT * FROM categories WHERE id='$category';";
+	$res = $conn->query( $query );
 	
+	if( $cat = $res->fetch_object() )
+		return $cat;
+	
+	return null;
+}
+
+function get_subCategories( $category ){
+	global $conn;
+	$query = "SELECT * FROM categories WHERE id='$category';";
+	$res = $conn->query( $query );
+	
+	$sub_cats = array();
+	$subs = "";
+	if( $name = $res->fetch_object() )
+		$subs = $name->sub_categories;
+	
+	if( !empty( $subs ) ){
+		$ids = explode( ' ', $subs );
+		foreach( $ids as $id )
+			array_push( $sub_cats, $id );
+	}
+	
+	return $sub_cats;
+}
+
+$subCats = array();
+array_push( $subCats, 1 );
+function get_SubCats( $cat ){
+	foreach( get_subCategories( $cat ) as $category ){
+		array_push( $subCats, getCategory( $category ) );
+		get_SubCats( $category );
+	}
+	print_r( $subCats );
+}
+
+?>
+	<div style="padding: 1%;">
+		<h2>Objavi oglas</h2>
+		<form action="objavi.php" method="POST" enctype="multipart/form-data">
+			<label>Naslov </label><input type="text" name="title" > <br/>
+			<label>Opis</label><br/><textarea name="description" rows="10" cols="50"></textarea> <br/>
+			<label>Predstavitvena slika </label><input type="file" name="show" > <br/>
+			<label>Slike </label><input type="file" name="images[]" multiple > <br/>
+			<label>Kategorija</label> <select name="category">
+				<?php foreach( $categories as $category ){
+					if( $category->deep == 1 ){
+						print_r( $subCats );
+						get_SubCats( $category->id );
+						print_r( $subCats ); ?>
+						<option value=<?php echo $category->id;?>><?php echo "&nbsp" . $category->name;?></option>
+						<?php foreach( $subCats as $cat ){ ?>
+							<option value=<?php echo $cat->id;?>><?php echo "&nbsp" . $cat->name;?></option>
+						<?php 
+				} } } ?>
+			</select>
+			<input type="submit" name="poslji" value="Objavi" /> <br/>
+			<label><?php echo $error;?></label>
+		</form>
+	</div>
 <?php include_once( "noga.php" ); ?>

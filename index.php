@@ -90,14 +90,16 @@ if( isset( $_POST["filtriraj"] ) ){
 		$oglasi = get_some_oglasi( $_POST["iskanje"] );
 	}
 }?>
+<table style="width: 100%;">
+<tr> <th style="width: 20%; vertical-align: top;">
 <form action="index.php" method="POST" enctype="multipart/form-data">
 	<input type="search" name="iskanje">
-	<input type="submit" name="isci" value="isci" /> <hr/>
+	<input type="submit" name="isci" value="isci" /> </br> <hr/>
 	
 	<?php foreach( $kategorije as $kategorija ){ ?>
-		<input type="checkbox" name="<?php echo $kategorija->id; ?>" value="true"
-		<?php if( in_array( $kategorija->id, $kategorije_filter ) ) { echo "checked"; } ?> >
-		<label><?php echo $kategorija->name; ?></label>
+			<input type="checkbox" name="<?php echo $kategorija->id; ?>" value="true"
+			<?php if( in_array( $kategorija->id, $kategorije_filter ) ) { echo "checked"; } ?> >
+			<label><?php echo $kategorija->name; ?></label> </br>
 	<?php } ?>
 	
 	</br> </br>
@@ -105,21 +107,24 @@ if( isset( $_POST["filtriraj"] ) ){
 	<?php if( $prikazi_zapadle ){ echo "checked"; } ?> >
 	<label>Prikaži zapadle oglase</label> </br> </br>
 	<input type="submit" name="filtriraj" value="Filtriraj" />
-	<br> <hr/>
+	</th><th>
 </form>
 	
 <?php foreach( $oglasi as $oglas ){	
 	$ts = new DateTime( "now", new DateTimeZone( "Europe/Ljubljana" ) );
 	$ts->setTimestamp( time() );
 	if( ( ( $ts->format( 'Y-m-d H:i:s' ) < $oglas->enddate ) || ( $ts->format( 'Y-m-d H:i:s' ) > $oglas->enddate && $prikazi_zapadle ) ) && in_array( $oglas->category_id, $kategorije_filter ) ){?>
-		<div class="oglas">
+		<div class="oglas" class="posts">
 			<h4><?php echo $oglas->title;?></h4>
 			<label>Kategorija: <?php echo get_category( $oglas->category_id ); ?> </label> </br> </br>
 			<img src="<?php echo $oglas->images . $oglas->show_image;?>" width="400"/>
 			</br> </br> <label>Pogledov: <?php echo $oglas->views;?> </label> </br> </br>
 			<a href="oglas.php?id=<?php echo $oglas->id;?>"><button>Preberi več</button></a>
+			<hr/>
 		</div>
-		<hr/>
-<?php }}
+<?php }} ?>
 
-include_once( "noga.php" ); ?>
+</th> </tr>
+</table>
+
+<?php include_once( "noga.php" ); ?>

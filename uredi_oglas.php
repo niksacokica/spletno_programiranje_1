@@ -154,9 +154,9 @@ if( isset( $_POST["uredi"] ) ){
 $categories = get_categories();
 ?>
 
-	<form action="uredi_oglas.php?id=<?php echo $oglas->id;?>" method="POST" enctype="multipart/form-data">
+	<form action="uredi_oglas.php?id=<?php echo $oglas->id;?>" method="POST" enctype="multipart/form-data" style="padding: 1%;">
 		<label>Naslov</label><input type="text" name="title" value="<?php echo $oglas->title;?>" /> <br/>
-		<label>Opis</label><br/><textarea name="description" rows="10" cols="50"><?php echo $oglas->description;?></textarea> </br> <br/>
+		<label>Opis</label><br/><textarea name="description" rows="5" cols="35"><?php echo $oglas->description;?></textarea> </br> <br/>
 		
 		<img src="<?php echo $oglas->images . $oglas->show_image;?>" width="200"/>
 		<input type="file" name="show" > </br> </br>
@@ -169,11 +169,12 @@ $categories = get_categories();
 		<input type="file" name="images[]" multiple > </br> </br>
 		
 		<label>Kategorija</label> <select name="category">
-			<?php foreach( $categories as $category ){ ?>
-				<option value=<?php echo $category->id;?>
-				<?php if( $category->id == $oglas->category_id ) echo 'selected="selected"';?>>
-				<?php echo $category->name;?></option>
-			<?php } ?>
+			<?php foreach( $categories as $category ){
+				if( $category->isMainCategory ){ ?>
+					<option value=<?php echo $category->id;?>
+					<?php if( $category->id == $oglas->category_id ) echo 'selected="selected"';?>>
+					<?php echo $category->name;?></option>
+			<?php } } ?>
 		</select>
 		
 		
