@@ -43,8 +43,8 @@ if( $oglas == null ){
 			if( $pic != $oglas->images . $oglas->show_image )
 				echo '<img src="' . $pic . '" width="400"/>';
 		} ?>
-		<p>Objavil: <?php echo $oglas->username;?></p>
-		<p>E-mail: <?php echo $oglas->email;?></p>
+		<p>Objavil: <?php echo $user->username;?></p>
+		<p>E-mail: <?php echo $user->email;?></p>
 		<a href="index.php"><button>Nazaj</button></a>
 	</div>
 	<hr/>
