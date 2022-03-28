@@ -32,8 +32,6 @@
 			exit();
 		}
 		
-		echo "<script>console.log('we good');</script>";
-		
 		$this->id = mysqli_insert_id( $db );
 	}
 	
@@ -51,6 +49,10 @@
 		return $comment;
 	}
 	
+	private static function cmp( $a, $b ){
+		return $a->postdate < $b->postdate;
+	}
+	
 	public static function vrniVsePost( $db, $id ){
 		$result = mysqli_query( $db, "Select * from comments where ad_id='$id'" );
 
@@ -62,7 +64,9 @@
 		$comments=array();
 		while( $row = mysqli_fetch_assoc( $result ) )
 			array_push( $comments, new Comment( $row["ad_id"], $row["email"], $row["username"], $row["content"], $row["postdate"], $row["ip"], $row["id"] ) );
-	
+		
+		usort( $comments, "Comment::cmp" );
+		
 		return $comments;
 	}
 	
@@ -77,6 +81,54 @@
 		$comments=array();
 		while( $row = mysqli_fetch_assoc( $result ) )
 			array_push( $comments, new Comment( $row["ad_id"], $row["email"], $row["username"], $row["content"], $row["postdate"], $row["ip"], $row["id"] ) );
+		
+		usort( $comments, "Comment::cmp" );
+		
+		return $comments;
+	}
+	
+	public static function del( $db, $id, $user ){
+		$check = mysqli_query( $db, "Select * from comments where id='$id'" );
+		if( mysqli_error( $db ) ) {
+			var_dump( mysqli_error( $db ) );
+			exit();
+		}
+		$row = mysqli_fetch_assoc( $result );
+		$ad_id = $row["ad_id"];
+		
+		$check2 = mysqli_query( $db, "Select * from ads where id='$ad_id'" );
+		if( mysqli_error( $db ) ) {
+			var_dump( mysqli_error( $db ) );
+			exit();
+		}
+		$row2 = mysqli_fetch_assoc( $result );
+		$user_id = $row2["user_id"];
+		
+		if( $user_id == $user ){
+			$result = mysqli_query( $db, "DELETE FROM comments WHERE id='$id'" );
+
+			if( mysqli_error( $db ) ) {
+				var_dump( mysqli_error( $db ) );
+				exit();
+			}
+			
+			return "komentar je bil uspešno izbrisan";
+		}
+	}
+	
+	public static function vrniPet( $db ){
+		$result = mysqli_query( $db, "SELECT * FROM comments ORDER BY comments.postdate DESC LIMIT 5" );
+
+		if( mysqli_error( $db ) ){
+			var_dump( mysqli_error( $db ) );
+			exit();
+		}
+		
+		$comments=array();
+		while( $row = mysqli_fetch_assoc( $result ) )
+			array_push( $comments, new Comment( $row["ad_id"], $row["email"], $row["username"], $row["content"], $row["postdate"], $row["ip"], $row["id"] ) );
+		
+		usort( $comments, "Comment::cmp" );
 	
 		return $comments;
 	}

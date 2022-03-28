@@ -56,9 +56,21 @@
 					</ul>
 				</div>
 			</nav>
-
-			<div class="col-sm-8 text-left"> 
-				<?php require_once( "routes.php" ); ?>
+			
+			<div class="row content">
+				<div class="col-sm">
+					<h3>Latest comments</h3>
+					<?php $comments = json_decode( file_get_contents("http://localhost/api2.php/comment/top5" ) );
+						foreach( $comments as $comment ){
+							$country = json_decode( file_get_contents("http://ip-api.com/json/" . $comment->ip ) ); ?> 
+							<a class="card" href="?controller=oglasi&action=prikazi&id=<?php echo $comment->ad_id; ?>"><?php echo $comment->username; ?> ( <?php echo $country->country; ?> ):<?php echo " " . $comment->content; ?></a> </br>
+					<?php } ?>
+				</div>
+			
+				<div class="col-sm-8 text-left"> 
+					<?php require_once( "routes.php" ); ?>
+				</div>
 			</div>
+		</div>
 			<body>
 				</html>
