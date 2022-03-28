@@ -31,17 +31,13 @@ api/proxy
 	if( isset( $request[0] ) && ( $request[0] == "comment" ) ){
 		switch( $method ){
 			case "GET":
-			//vrni komentar
-				if( isset( $request[1] ) && $request[1] !== "JSONP" ){
-					$commentid = $request[1];
-					$comment=Comment::vrniEnega($db,$oglasid);
-				}
-				else{
-			//vrni vse oglase
-			//uporabimo statično funkcijo ::vrniVse
-					$oglas=Oglas::vrniVse($db);
-
-				}
+				if( isset( $request[1] ) && isset( $request[2] ) )
+					$comment = Comment::vrniEnega( $db, $request[1], request[2] );
+				else if( isset( $request[1] ) )
+					$comment = Comment::vrniVsePost( $db, $request[1] );
+				else
+					$comment = Comment::vrniVse( $db );
+				
 				break;
 			case 'PUT':
 			//če je podan id, posodobimo oglas
@@ -66,44 +62,27 @@ api/proxy
 			case "POST":
 				parse_str( file_get_contents( 'php://input' ), $input );
 				if( isset( $input ) ){
-					echo "<script>console.log('i wanna cry');</script>";
-					echo "<script>console.log('" . json_encode( $input ) . "');</script>";
 					$ts = new DateTime( "now", new DateTimeZone( "Europe/Ljubljana" ) );
 					$ts->setTimestamp( time() );
-					$cmnt = new Comment( 1, $input["email"], $input["username"], $input["comment"], $ts->format( 'Y-m-d H:i:s' ), "192" );
-					$cmnt->dodaj( $db );
-				}else{
-					$cmnt = array( "info" => "Ni podane vsebine oglasa" );
-				}
-			break;
-			case 'DELETE':
-			//ta metoda apija ni implementirana
-			//enako kot pri ostalih, bi bilo potrebon prebrati id
-			//nato pa na razredu oglas napisati in nato poklicati funkcijo za brisanje
+					$comment = new Comment( $input["id"], $input["email"], $input["username"], $input["comment"], $ts->format( 'Y-m-d H:i:s' ), "192" );
+					$comment->dodaj( $db );
+				}else
+					$comment = array( "info" => "Ni podane vsebine oglasa" );
+				
+				break;
+			case "DELETE":
 				$oglas=array("info"=>"oglas je bil uspešno zbrisan");
-			break;
+				break;
 		}
 
-	//del apija, ki se odziva na JSONP zahtevo
-	//JSONP/:callback
-		if(isset($request[1])&&isset($request[2])&&$request[1]=='JSONP')
-		{
-			$callback=$request[2];
-			$oglas=json_encode($oglas);
-			echo "$callback($oglas);";
-		}
-		else 
-		{
-	//ta del kode, bi se načeloma lahko ponavljal v vsaki veji switch stavka
-	//a ker je enak v vsaki veji smo ga dali na konec, vsaka veja pa nastavi
-	//vrednost spremenljivke $oglas
-
-	//nastavimo glave odgovora tako, da brskalniku sporočimo, da mu vračamo json
-			header('Content-Type: application/json');
-	//omgočimo zahtevo iz različnih domen
-			header("Access-Control-Allow-Origin: *");
-	//izpišemo oglas, ki smo ga prej ustrezno nastavili
-			echo json_encode($oglas);
+		if( isset( $request[1] ) && isset( $request[2] ) && $request[1] == "JSONP" ){
+			$callback = $request[2];
+			$comment = json_encode( $comment );
+			echo "$callback( $comment );";
+		}else{
+			header( "Content-Type: application/json" );
+			header( "Access-Control-Allow-Origin: *" );
+			echo json_encode( $comment );
 		}
 	}
 	

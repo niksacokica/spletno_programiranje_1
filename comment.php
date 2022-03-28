@@ -36,4 +36,48 @@
 		
 		$this->id = mysqli_insert_id( $db );
 	}
+	
+	public static function vrniEnega( $db, $ad_id, $id ){
+		$result = mysqli_query( $db, "Select * from comments where id='$id' and ad_id='$ad_id'" );
+
+		if( mysqli_error( $db ) ){
+			var_dump( mysqli_error( $db ) );
+			exit();
+		}
+		
+		$row = mysqli_fetch_assoc( $result );
+		$comment = new Comment( $row["ad_id"], $row["email"], $row["username"], $row["content"], $row["postdate"], $row["ip"], $row["id"] );
+	
+		return $comment;
+	}
+	
+	public static function vrniVsePost( $db, $id ){
+		$result = mysqli_query( $db, "Select * from comments where ad_id='$id'" );
+
+		if( mysqli_error( $db ) ){
+			var_dump( mysqli_error( $db ) );
+			exit();
+		}
+		
+		$comments=array();
+		while( $row = mysqli_fetch_assoc( $result ) )
+			array_push( $comments, new Comment( $row["ad_id"], $row["email"], $row["username"], $row["content"], $row["postdate"], $row["ip"], $row["id"] ) );
+	
+		return $comments;
+	}
+	
+	public static function vrniVse( $db ){
+		$result = mysqli_query( $db, "Select * from comments" );
+
+		if( mysqli_error( $db ) ) {
+			var_dump( mysqli_error( $db ) );
+			exit();
+		}
+		
+		$comments=array();
+		while( $row = mysqli_fetch_assoc( $result ) )
+			array_push( $comments, new Comment( $row["ad_id"], $row["email"], $row["username"], $row["content"], $row["postdate"], $row["ip"], $row["id"] ) );
+	
+		return $comments;
+	}
 } ?>
