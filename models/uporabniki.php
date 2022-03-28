@@ -61,4 +61,10 @@
 		return mysqli_query( $db, "UPDATE users SET email='$email', username='$username', firstname='$firstname', lastname='$lastname',
 			password='$password', address='$address', postalcode='$postalcode', phone='$phone', sex='$sex', age='$age' WHERE id=$id" );
 	}
+	
+	public static function deleteUser( $id ){
+		$db = Db::getInstance();
+		
+		return mysqli_query( $db, "DELETE FROM users WHERE id='$id'" );
+	}
 }?>

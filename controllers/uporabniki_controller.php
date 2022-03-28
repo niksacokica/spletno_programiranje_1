@@ -56,4 +56,12 @@
 		$user = Uporabnik::getUser( $_GET["id"] );
 		require_once( "views/uporabniki/profil.php" );
 	}
+	
+	public function delete_user(){
+		if( !isset( $_GET["id"] ) )
+			return call( "strani", "napaka");
+		
+		Uporabnik::deleteUser( $_GET["id"] );
+		header( "Location: index.php?controller=uporabniki&action=admin" );
+	}
 } ?>

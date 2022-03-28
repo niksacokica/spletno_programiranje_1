@@ -1,3 +1,5 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
 <?php class Oglas{
 	public $id;
 	public $title;
@@ -152,11 +154,69 @@
 		return $sub_cats;
 	}
 	
-	public function uredi( $id, $title, $description, $files ){
+	public static function uredi( $id, $title, $description, $files, $cats ){
+		$db = Db::getInstance();
+		$allowed = array( "image/jpeg", "image/gif", "image/png" );
+		$query = $query = "UPDATE ads SET title='$title', description='$description', categories_ids = '$cats' WHERE id='$id'";
+		
+		$path = Oglas::najdi( $id );
+		
+		if( $files["show"]["error"] == 0 ){
+			$show = $files["show"]["name"];
+			unlink( $path->images . $show );
+			move_uploaded_file( $files["show"]["tmp_name"], $path->images . $show );
+			
+			$query = "UPDATE ads SET title='$title', description='$description', show_image='$show', categories_ids='$cats' WHERE id='$id';";
+		}
+		
+		if( $files["images"]["error"] == 0 ){
+			$pics = glob( $path->images . "*" );
+			foreach( $pics as $pic ){
+				if( $pic != $path->images . $show )
+					unlink( $pic );
+			}
+			
+			$images = Oglas::reArrayFiles( $files["images"] );
+			foreach( $images as $img ){
+				if( $img["name"] != $show ){
+					if( in_array( $img["type"], $allowed ) )
+						move_uploaded_file( $img["tmp_name"], $path->images . $img["name"] );
+				}
+			}
+		}
+		
+		return mysqli_query( $db, $query );
+	}
+	
+	public static function del( $id ){
+		$db = Db::getInstance();
+		$path = Oglas::najdi( $id );
+		$files = glob( $path->images . "*" );
+		
+		foreach( $files as $file ){
+			unlink( $file );
+		}
+		rmdir( $path->images );
+		
+		$comments = json_decode( file_get_contents("http://localhost/api2.php/comment/" . $id ) );
+		foreach( $comments as $comment ){
+			echo "<script> var id = " . json_encode( $comment->id, JSON_HEX_TAG | JSON_HEX_AMP ) . "; var user = " .
+			json_encode( $_SESSION["USER_ID"], JSON_HEX_TAG | JSON_HEX_AMP ) . "; del( id, user ); </script>";
+		}
+		
+		return mysqli_query( $db, "DELETE FROM ads WHERE id='$id'" );
+	}
+	
+	public static function extend( $id ){
 		$db = Db::getInstance();
 		
-		/*if( $files["show"]["error"] == 0 )
-			$query = "UPDATE ads SET title='$title', description='$description', show_image='$show', categories_ids='$cats' WHERE id='$id';";
-		$query = "UPDATE ads SET title='$title', description='$description', categories_ids = '$cats' WHERE id='$id';";*/
+		return mysqli_query( $db, "UPDATE ads SET enddate=DATE_ADD(NOW(), INTERVAL 30 DAY) WHERE id='$id'" );
 	}
 } ?>
+
+<script>
+	function del( id, user ){
+		comment = { id, user };
+		$.ajax( { method:"DELETE", url:"http://localhost/api2.php/comment/"+id, data:JSON.stringify( comment ), success:function( data ){} } );
+	}
+</script>

@@ -29,7 +29,7 @@
 	</br> <label>Komentarji</label>
 	<?php $comments = json_decode( file_get_contents("http://localhost/api2.php/comment/" . $oglas->id ) );
 		foreach( $comments as $comment ){
-			$country = json_decode( file_get_contents("http://ip-api.com/json/" . $comment->ip ) ); ?> 
+			$country = json_decode( file_get_contents("http://ip-api.com/json/" . $comment->ip ) ); ?>
 			<p><?php echo $comment->username; ?> ( <?php echo $country->country; ?> ):<?php echo " " . $comment->content; ?></p>
 	<?php } ?>
 </div> 
@@ -48,8 +48,10 @@
 			return response.json();
 		  } ).then( ( json ) => {
 			if( json["smtp_check"] && $( "#usernameGuest" ).val().length > 0 ){
-				comment = { comment:$( "#commentGuest" ).val(), email:$( "#emailGuest" ).val(), username:$( "#usernameGuest" ).val(), id:$( "#id" ).attr( "name" ) }
-					$.post( "api2.php/comment", comment, function( data ){} );
+				$.getJSON( "http://ip-api.com/json/", function(data){
+					comment = { comment:$( "#commentGuest" ).val(), email:$( "#emailGuest" ).val(), username:$( "#usernameGuest" ).val(), id:$( "#id" ).attr( "name" ), ip:data["query"] }
+						$.post( "api2.php/comment", comment, function( data ){} );
+				} );
 		  } } );
 	}
 </script>

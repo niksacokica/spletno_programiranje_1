@@ -8,7 +8,7 @@
 	}
 
 	$controllers = array( "strani" => ["domov", "napaka"], "oglasi" => ["index", "prikazi", "dodaj", "shrani", "moji", "uredi", "spremeni"],
-		"uporabniki" => ["registracija", "registriraj", "prijava", "prijavi", "odjava", "admin", "profile", "edit_user"] );
+		"uporabniki" => ["registracija", "registriraj", "prijava", "prijavi", "odjava", "admin", "profile", "edit_user", "delete_user"] );
 
 	if( array_key_exists( $controller, $controllers ) ){
 		if( in_array( $action, $controllers[$controller] ) )

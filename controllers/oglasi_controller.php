@@ -65,7 +65,13 @@
 			  }
 			}
 			
-			Oglas::uredi( $_GET["id"], $_POST["title"], $_POST["description"], $_FILES );
+			Oglas::uredi( $_GET["id"], $_POST["title"], $_POST["description"], $_FILES, $cats );
+			header( "Location: index.php?controller=oglasi&action=prikazi&id=" . $_GET["id"] );
+		}else if( isset( $_POST["izbrisi"] ) ){
+			Oglas::del( $_GET["id"] );
+			header( "Location: index.php?controller=oglasi&action=moji" );
+		}else if( isset( $_POST["podaljsaj"] ) ){
+			Oglas::extend( $_GET["id"] );
 			header( "Location: index.php?controller=oglasi&action=prikazi&id=" . $_GET["id"] );
 		}
 	}
